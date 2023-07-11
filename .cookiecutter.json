@@ -1,0 +1,14 @@
+{
+  "_output_dir": "/Users/Andrew/git/gridworks",
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Andrew Schweitzer",
+  "copyright_year": "2023",
+  "development_status": "Development Status :: 3 - Alpha",
+  "email": "schweitz72@gmail.com",
+  "friendly_name": "gwcert",
+  "github_user": "anschweitzer",
+  "license": "MIT",
+  "package_name": "gwcert",
+  "project_name": "gridworks-cert",
+  "version": "0.0.0"
+}
