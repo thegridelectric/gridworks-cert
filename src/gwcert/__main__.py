@@ -1,12 +1,21 @@
-"""Command-line interface."""
-import click
+"""gwcert command-line interface."""
+import typer
+
+from gwcert.ca import app as ca_app
+from gwcert.csr import app as csr_app
 
 
-@click.command()
-@click.version_option()
-def main() -> None:
-    """gwcert."""
+app = typer.Typer(
+    no_args_is_help=True,
+    pretty_exceptions_enable=False,
+    rich_markup_mode="rich",
+    help="GridWords TLS certificate tools.",
+)
+app.add_typer(ca_app, name="ca")
+app.add_typer(csr_app, name="csr")
 
+# For sphinx:
+typer_click_object = typer.main.get_command(app)
 
 if __name__ == "__main__":
-    main(prog_name="gridworks-cert")  # pragma: no cover
+    app()

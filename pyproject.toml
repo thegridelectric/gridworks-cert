@@ -19,8 +19,10 @@ classifiers = [
 Changelog = "https://github.com/anschweitzer/gridworks-cert/releases"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-click = ">=8.0.1"
+python = "^3.9"
+ownca = ">=0.4.0"
+typer = ">=0.9.0"
+xdg = "^6.0.0"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
@@ -49,7 +51,10 @@ xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 myst-parser = {version = ">=0.16.1"}
 
 [tool.poetry.scripts]
-gridworks-cert = "gwcert.__main__:main"
+gwcert = "gwcert.__main__:app"
+gwcert-ca = "gwcert.ca.__main__:app"
+gwcert-csr = "gwcert.csr.__main__:app"
+
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
