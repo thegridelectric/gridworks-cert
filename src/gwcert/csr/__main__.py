@@ -14,7 +14,7 @@ app = typer.Typer(
 
 
 @app.command()
-def create():
+def create() -> None:
     """Create a Certificate Signing Request."""
     pass
 

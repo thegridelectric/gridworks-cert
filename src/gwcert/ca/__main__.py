@@ -31,7 +31,7 @@ DEFAULT_CA_DIR = Path(xdg.xdg_data_home()) / "gridworks" / "ca"
 @app.command()
 def clean(
     ca_dir: Annotated[
-        str, Path, typer.Option(help="CA storage directory.")
+        Path, typer.Option(help="CA storage directory.")
     ] = DEFAULT_CA_DIR,
     yes_really_forever: Annotated[
         bool,
@@ -40,7 +40,7 @@ def clean(
             help="Required to actually clean the CA storage directory",
         ),
     ] = False,
-):
+) -> None:
     """Delete the CA storage directory and contents. [yellow][bold] WARNING: [red] PERMANENTLY DELETES CA CERTIFICATE AND KEY."""
     if not yes_really_forever:
         print(
@@ -80,7 +80,7 @@ def create(
         str, typer.Argument(help="Certificate Authority Common Name when issuing cert.")
     ],
     ca_dir: Annotated[
-        str, Path, typer.Option(help="CA storage directory.")
+        Path, typer.Option(help="CA storage directory.")
     ] = DEFAULT_CA_DIR,
     valid_days: Annotated[
         int, typer.Option(help="Number of days issued certificates should be valid for")
@@ -97,7 +97,7 @@ def create(
             help="Passed to cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key()"
         ),
     ] = 2048,
-):
+) -> None:
     """Create files necessary for a simple, self-signed Certificate Authority."""
     ca_dir = Path(ca_dir)
     ca_status = ownca_directory(str(ca_dir))
@@ -124,14 +124,13 @@ def create(
 )
 def certify(
     csr_path: Annotated[
-        str,
         Path,
         typer.Argument(help="Path to the Certificate Signing Request file to sign"),
     ],
     ca_dir: Annotated[
-        str, Path, typer.Option(help="CA storage directory.")
+        Path, typer.Option(help="CA storage directory.")
     ] = DEFAULT_CA_DIR,
-):
+) -> None:
     """Create a certificate for a Certificate Signing Request."""
     print("[yellow][bold]WARNING: Not implemented[/yellow][/bold]")
     print(f"csr_path: <{csr_path}>")
@@ -141,9 +140,9 @@ def certify(
 @app.command()
 def info(
     ca_dir: Annotated[
-        str, Path, typer.Option(help="CA storage directory.")
+        Path, typer.Option(help="CA storage directory.")
     ] = DEFAULT_CA_DIR,
-):
+) -> None:
     """Show information about CA configured on disk."""
     ca_dir = Path(ca_dir)
     if not ca_dir.exists():
