@@ -54,7 +54,6 @@ myst-parser = {version = ">=0.16.1"}
 [tool.poetry.scripts]
 gwcert = "gwcert.__main__:app"
 gwcert-ca = "gwcert.ca.__main__:app"
-gwcert-csr = "gwcert.csr.__main__:app"
 
 
 [tool.coverage.paths]

@@ -18,8 +18,11 @@ def test_gwcert_help_succeeds(runner: CliRunner) -> None:
     result = runner.invoke(app, args=["ca", "--help"])
     assert result.exit_code == 0
 
-    # gwcert csr
-    result = runner.invoke(app, args=["csr"])
-    assert result.exit_code == 0
-    result = runner.invoke(app, args=["csr", "--help"])
+    # gwcert ca subcommands
+    for subcommand in ["add-key", "clean", "create", "info"]:
+        result = runner.invoke(app, args=["ca", subcommand, "--help"])
+        assert result.exit_code == 0, f"{subcommand}  exit: {result.exit_code}"
+
+    # gwcert ca info
+    result = runner.invoke(app, args=["ca", "info"])
     assert result.exit_code == 0
