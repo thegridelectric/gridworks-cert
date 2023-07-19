@@ -12,22 +12,18 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
 
-[pypi_]: https://pypi.org/project/gridworks-cert/
-[status]: https://pypi.org/project/gridworks-cert/
-[python version]: https://pypi.org/project/gridworks-cert
-[read the docs]: https://gridworks-cert.readthedocs.io/
-[tests]: https://github.com/anschweitzer/gridworks-cert/actions?workflow=Tests
-[codecov]: https://app.codecov.io/gh/anschweitzer/gridworks-cert
-[pre-commit]: https://github.com/pre-commit/pre-commit
-[black]: https://github.com/psf/black
+Tools for creating TLS certificates for use with, e.g. MQTT and RabbitMQ.
+
+**NOTE**: these are temporary tools for _non-production_ deployments. This library is more or less equivalent to a README
+containing [OpenSSL] commands, but less manual.
+
+This library is a thin wrapper around [ownca], which wraps [pyca/cryptography], which wraps the [OpenSSL] C library.
+See also [tls-gen], a repo from [rabbitmq], which performs a similar task using a stack of make/python/OpenSSL CLI.
 
 ## Features
 
-- TODO
-
-## Requirements
-
-- TODO
+- Create a local Certificate Authority directory with a self-signed certificate, via `gwcert ca create`.
+- Create named key pairs and sign them with the created CA with, via `gwcert ca add-key`.
 
 ## Installation
 
@@ -39,7 +35,34 @@ $ pip install gridworks-cert
 
 ## Usage
 
-Please see the [Command-line Reference] for details.
+Get help with any of:
+
+```shell
+gwcert
+gwcert ca
+gwcert ca create --help
+gwcert ca add-key --help
+```
+
+Create a Certificate Authority directory with a self-signed certificate via:
+
+```shell
+gwcert ca create
+```
+
+Show information about the locally created ca with:
+
+```shell
+gwcert ca info
+```
+
+Add a named set of keys (public, private, certificate) via:
+
+```shell
+gwcert ca add-key
+```
+
+Please see the [Command-line Reference] for more details.
 
 ## Contributing
 
@@ -65,6 +88,19 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 [hypermodern python cookiecutter]: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 [file an issue]: https://github.com/anschweitzer/gridworks-cert/issues
 [pip]: https://pip.pypa.io/
+[pypi_]: https://pypi.org/project/gridworks-cert/
+[status]: https://pypi.org/project/gridworks-cert/
+[python version]: https://pypi.org/project/gridworks-cert
+[read the docs]: https://gridworks-cert.readthedocs.io/
+[tests]: https://github.com/thegridelectric/gridworks-cert/actions?workflow=Tests
+[codecov]: https://app.codecov.io/gh/thegridelectric/gridworks-cert
+[pre-commit]: https://github.com/pre-commit/pre-commit
+[black]: https://github.com/psf/black
+[tls-gen]: https://github.com/rabbitmq/tls-gen
+[ownca]: https://ownca.readthedocs.io/en/latest/
+[pyca/cryptography]: https://cryptography.io/en/latest/
+[openssl]: https://www.openssl.org/
+[rabbitmq]: https://rabbitmq.com/ssl.html#automated-certificate-generation-transcript
 
 <!-- github-only -->
 
