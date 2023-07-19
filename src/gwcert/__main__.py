@@ -2,7 +2,6 @@
 import typer
 
 from gwcert.ca import app as ca_app
-from gwcert.csr import app as csr_app
 
 
 app = typer.Typer(
@@ -12,7 +11,6 @@ app = typer.Typer(
     help="GridWords TLS certificate tools.",
 )
 app.add_typer(ca_app, name="ca")
-app.add_typer(csr_app, name="csr")
 
 # For sphinx:
 typer_click_object = typer.main.get_command(app)
