@@ -1,5 +1,6 @@
 """Commands for gwcert.ca package."""
-
+import datetime
+import uuid
 from pathlib import Path
 from typing import Annotated
 from typing import List
@@ -166,7 +167,7 @@ def gen_rsa(
 
 
 @app.command()
-def csr(
+def gen_csr(
     name: Annotated[
         str,
         typer.Argument(
@@ -236,7 +237,8 @@ def csr(
         .add_extension(
             x509.SubjectAlternativeName(
                 [x509.DNSName(dns_name) for dns_name in dns_names]
-            )
+            ),
+            critical=False,
         )
         .add_extension(
             x509.BasicConstraints(ca=False, path_length=None), critical=False
@@ -282,7 +284,12 @@ def certify(
         Path, typer.Option(help="Base storage directory for named certs")
     ] = DEFAULT_CERTS_DIR,
     valid_days: Annotated[
-        int, typer.Option(help="Number of days issued certificates should be valid for")
+        int,
+        typer.Option(
+            help="Number of days issued certificates should be valid for",
+            min=0,
+            max=825,
+        ),
     ] = 825,
     force: Annotated[
         bool,
@@ -318,112 +325,59 @@ def certify(
     if not ca_private_key_path.exists():
         raise ValueError(f"CA private key path {ca_private_key_path} does not exist")
 
-    print(valid_days)
+    with csr_path.open("rb") as f:
+        csr = x509.load_pem_x509_csr(f.read())
+    with ca_certificate_path.open("rb") as f:
+        ca_certificate = x509.load_pem_x509_certificate(f.read())
+    with ca_private_key_path.open("rb") as f:
+        ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
-    """
-    # certificate signing request (if ICA)
-    try:
-        with open(csr_file, "rb") as csr_f:
-            csr_data = csr_f.read()
-
-        csr = x509.load_pem_x509_csr(csr_data, default_backend())
-        csr_bytes = csr.public_bytes(encoding=serialization.Encoding.PEM)
-
-    except FileNotFoundError:
-        csr = None
-        csr_bytes = None
-
-    # certificate
-
-    try:
-        with open(certificate_file, "rb") as cert_f:
-            cert_data = cert_f.read()
-
-        certificate = x509.load_pem_x509_certificate(
-            cert_data, default_backend()
-        )
-        current_cn_name = (
-            certificate.subject.rfc4514_string().split("CN=")[-1].split(",")[0]
-        )
-        certificate_bytes = certificate.public_bytes(
-            encoding=serialization.Encoding.PEM
+    certificate_builder = x509.CertificateBuilder().subject_name(csr.subject)
+    for extension in csr.extensions:
+        if extension.value.oid._name != "subjectAltName":  # noqa
+            continue
+        certificate_builder = certificate_builder.add_extension(
+            extension.value, critical=extension.critical
         )
 
-    except FileNotFoundError:
-        certificate = None
-        certificate_bytes = None
-
-    if common_name is not None and common_name != current_cn_name:
-        raise OwnCAInconsistentData(
-            "Initialized CN name does not match with current existent "
-            + f"common_name: {current_cn_name}"
+    print(f"Writing certificate file: {certificate_path}")
+    _store_file(
+        certificate_path,
+        certificate_builder.issuer_name(ca_certificate.subject)
+        .public_key(csr.public_key())
+        .serial_number(uuid.uuid4().int)
+        .not_valid_before(datetime.datetime.today() - datetime.timedelta(1, 0, 0))
+        .not_valid_after(
+            datetime.datetime.today() + (datetime.timedelta(1, 0, 0) * valid_days)
         )
-
-    # key
-    try:
-        with open(key_file, "rb") as key_f:
-            key_data = key_f.read()
-
-        key = serialization.load_pem_private_key(
-            key_data, password=None, backend=default_backend()
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=True,
+                key_encipherment=True,
+                content_commitment=True,
+                data_encipherment=False,
+                key_agreement=False,
+                encipher_only=False,
+                decipher_only=False,
+                key_cert_sign=False,
+                crl_sign=False,
+            ),
+            critical=True,
         )
-
-        key_bytes = key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.PKCS8,
-            serialization.NoEncryption(),
+        .add_extension(
+            x509.BasicConstraints(ca=False, path_length=None),
+            critical=True,
         )
-
-    except FileNotFoundError:
-        key = None
-        key_bytes = None
-
-    with open(public_key_file, "rb") as pub_key_f:
-        pub_key_data = pub_key_f.read()
-
-    public_key = serialization.load_ssh_public_key(
-        pub_key_data, backend=default_backend()
+        .add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()),
+            critical=False,
+        )
+        .sign(
+            private_key=ca_key,
+            algorithm=hashes.SHA256(),
+        )
+        .public_bytes(encoding=serialization.Encoding.PEM),
     )
-
-    public_key_bytes = public_key.public_bytes(
-        serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH
-    )
-
-    # certificate revocation list (crl)
-    # if there is not crl file it is created (backward compatible)
-    try:
-        with open(crl_file, "rb") as crl_f:
-            crl_data = crl_f.read()
-
-        crl = x509.load_pem_x509_crl(crl_data, default_backend())
-        crl_bytes = crl.public_bytes(encoding=serialization.Encoding.PEM)
-
-    except FileNotFoundError:
-        if certificate is None:
-            crl = None
-            crl_bytes = None
-
-        else:
-            crl = ca_crl(
-                ca_cert=certificate, ca_key=key, common_name=common_name
-            )
-            crl_bytes = crl.public_bytes(encoding=serialization.Encoding.PEM)
-
-    return OwncaCertData(
-        {
-            "cert": certificate,
-            "cert_bytes": certificate_bytes,
-            "csr": csr,
-            "csr_bytes": csr_bytes,
-            "key": key,
-            "key_bytes": key_bytes,
-            "public_key": public_key,
-            "public_key_bytes": public_key_bytes,
-            "crl": crl,
-            "crl_bytes": crl_bytes,
-        }
-    )
-    """
 
 
 # For sphinx:
