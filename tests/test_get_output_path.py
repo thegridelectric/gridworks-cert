@@ -4,7 +4,7 @@ from pathlib import Path
 from gwcert.key.__main__ import _get_output_path  # noqa
 
 
-def test_get_output_path():
+def test_get_output_path() -> None:
     """Test _get_output_path()."""
     for name, output in [
         ("a", "/certs/a/a.pem"),

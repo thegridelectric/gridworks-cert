@@ -52,6 +52,10 @@ def _get_output_path(
 
     Returns:
         Output Path.
+
+    Raises:
+        ValueError: If name_as_path is '.' or '..'.
+
     """
     name_as_path = Path(name_or_output_path)
     if name_as_path in _INVALID_PATHS:
@@ -227,8 +231,8 @@ def csr(
     print(f"Writing CSR file:         {csr_path}")
     _store_file(
         csr_path,
-        x509.CertificateSigningRequestBuilder()
-        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)]))
+        x509.CertificateSigningRequestBuilder()  # type: ignore
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)]))  # type: ignore
         .add_extension(
             x509.SubjectAlternativeName(
                 [x509.DNSName(dns_name) for dns_name in dns_names]
