@@ -7,7 +7,6 @@ from typing import List
 from typing import Optional
 
 import typer
-import xdg
 from ownca import CertificateAuthority
 from ownca._constants import CA_CERT  # noqa
 from ownca._constants import CA_CERTS_DIR  # noqa
@@ -18,6 +17,8 @@ from ownca._constants import CA_PUBLIC_KEY  # noqa
 from ownca.utils import ownca_directory
 from rich import print
 
+from gwcert.paths import DEFAULT_CA_DIR
+
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -27,8 +28,6 @@ app = typer.Typer(
     Commands for creating and using a local Certificate Authority.
     """,
 )
-
-DEFAULT_CA_DIR = Path(xdg.xdg_data_home()) / "gridworks" / "ca"
 
 
 @app.command()
