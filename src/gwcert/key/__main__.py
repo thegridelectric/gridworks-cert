@@ -332,7 +332,7 @@ def certify(
     with ca_private_key_path.open("rb") as f:
         ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
-    certificate_builder = x509.CertificateBuilder().subject_name(csr.subject)
+    certificate_builder: x509.CertificateBuilder = x509.CertificateBuilder().subject_name(csr.subject)  # type: ignore
     for extension in csr.extensions:
         if extension.value.oid._name != "subjectAltName":  # noqa
             continue
