@@ -8,8 +8,7 @@ from gwcert.__main__ import app
 
 def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
     """Verify 'gwcert key' commands produce expected files."""
-    ca_dir = tmp_path / "ca"
-    certs_dir = ca_dir / "certs"
+    certs_dir = tmp_path / "certs"
     key_name = "foo"
 
     # gwcert key rsa
@@ -33,9 +32,25 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
     ]:
         assert path.exists()
 
+    # Generate the CA so we can certify
+    ca_dir = tmp_path / "ca"
+    result = runner.invoke(
+        app, args=["ca", "create", "--ca-dir", str(ca_dir), "testca"]
+    )
+    assert result.exit_code == 0, result.stdout
+
     # gwcert key certify
     result = runner.invoke(
-        app, args=["key", "certify", "--certs-dir", str(certs_dir), key_name]
+        app,
+        args=[
+            "key",
+            "certify",
+            "--certs-dir",
+            str(certs_dir),
+            "--ca-dir",
+            str(ca_dir),
+            key_name,
+        ],
     )
     assert result.exit_code == 0, result.stdout
     for path in [
@@ -46,7 +61,16 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
     # gwcert key add
     key_name = "bar"
     result = runner.invoke(
-        app, args=["key", "add", "--certs-dir", str(certs_dir), key_name]
+        app,
+        args=[
+            "key",
+            "add",
+            "--certs-dir",
+            str(certs_dir),
+            "--ca-dir",
+            str(ca_dir),
+            key_name,
+        ],
     )
     assert result.exit_code == 0, result.stdout
     for path in [
