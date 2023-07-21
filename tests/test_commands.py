@@ -34,6 +34,6 @@ def test_gwcert_help_succeeds(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
     # gwcert key subcommands
-    for subcommand in ["gen-rsa", "gen-csr", "certify"]:
+    for subcommand in ["rsa", "csr", "certify", "add"]:
         result = runner.invoke(app, args=["key", subcommand, "--help"])
         assert result.exit_code == 0, f"{subcommand}  exit: {result.exit_code}"

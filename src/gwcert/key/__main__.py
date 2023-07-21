@@ -10,7 +10,7 @@ import typer
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa as crypto_rsa
 from cryptography.x509.oid import NameOID
 from rich import print
 
@@ -23,7 +23,26 @@ app = typer.Typer(
     pretty_exceptions_enable=False,
     rich_markup_mode="rich",
     help="""
-    Commands for generating keys, Certificate Signing Requests and Certificates.
+    Commands for generating named keys, Certificate Signing Requests and Certificates.
+
+    By default certificates are generated in:
+
+        $HOME/.local/share/gridworks/ca/certs/KEYNAME/
+
+    By default CA files are:
+
+        $HOME/.local/share/gridworks/ca/ca.crt
+        $HOME/.local/share/gridworks/ca/private/ca_key.pem.
+
+    Subcommands rsa, csr and certify may be called in order to produce key/certificate pairs usable with the
+    specified CA. Subcommand 'add' calls all three of those in order.
+
+    The I/O of these commands is approximately:
+
+        rsa -> private key
+        csr(private key) -> CSR
+        certify(CSR, CA certificate, CA private key) -> certificate
+
     """,
 )
 
@@ -92,7 +111,7 @@ def _store_file(
 
 
 @app.command()
-def gen_rsa(
+def rsa(
     name: Annotated[
         str,
         typer.Argument(
@@ -126,13 +145,18 @@ def gen_rsa(
 ) -> None:
     """
     Create public/private key pair using RSA.
+
+    Writes public and private key files, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.pub
+        $HOME/.local/share/gridworks/ca/certs/name/name.pem
+
+    Output files can be explicitly named by passing a path-like string for a ".pem" file to the name parameter.
     """
     private_key_path = _get_output_path(
         name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
     )
-    public_key_path = _get_output_path(
-        name_or_output_path=name, output_suffix=".pub", certs_dir=certs_dir
-    )
+    public_key_path = private_key_path.with_suffix(".pub")
     if not force and (private_key_path.exists() or public_key_path.exists()):
         print(
             "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
@@ -145,7 +169,9 @@ def gen_rsa(
         )
         print("\nUse --force to overwrite keys")
         return
-    key = rsa.generate_private_key(public_exponent=public_exponent, key_size=key_size)
+    key = crypto_rsa.generate_private_key(
+        public_exponent=public_exponent, key_size=key_size
+    )
     print(f"Writing private key file: {private_key_path}")
     _store_file(
         private_key_path,
@@ -167,7 +193,7 @@ def gen_rsa(
 
 
 @app.command()
-def gen_csr(
+def csr(
     name: Annotated[
         str,
         typer.Argument(
@@ -207,6 +233,18 @@ def gen_csr(
 ) -> None:
     """
     Create Certificate Signing Request from a private key.
+
+    Uses input files, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.pub
+
+    Writes a CSR file, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.csr
+
+    Input file can be explicitly named with the --private-key-path paramter.
+    Output file can be explicitly named by passing a path-like string for a ".csr" file to the name parameter.
+
     """
     csr_path = _get_output_path(
         name_or_output_path=name, output_suffix=".csr", certs_dir=certs_dir
@@ -302,7 +340,18 @@ def certify(
     ] = False,
 ) -> None:
     """
-    Sign a CSR, producing a certificate.
+    Sign a CSR, producing a certificate .
+
+    Uses input files, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.csr
+
+    Writes a certificate file, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.crt
+
+    Input file can be explicitly named with the --csr-path, --ca-certificate-path and --ca-private-key-path parameters.
+    Output file can be explicitly named by passing a path-like string for a ".crt" file to the name parameter.
     """
     certificate_path = _get_output_path(name, ".crt", certs_dir)
     if csr_path is None:
@@ -377,6 +426,164 @@ def certify(
             algorithm=hashes.SHA256(),
         )
         .public_bytes(encoding=serialization.Encoding.PEM),
+    )
+
+
+@app.command()
+def add(
+    ctx: typer.Context,
+    name: Annotated[
+        str,
+        typer.Argument(
+            help="'name' of generated identity, or explict path to generated private key file."
+        ),
+    ],
+    csr_path: Annotated[
+        Optional[Path],
+        typer.Option(
+            help=(
+                "Optional explicit path to Certificate Signing Request. If absent, CSR path is derived from the"
+                "private key output path."
+            )
+        ),
+    ] = None,
+    certificate_path: Annotated[
+        Optional[Path],
+        typer.Option(
+            help=(
+                "Optional explicit path to Certificate Signing Request. If absent, CSR path is derived from the"
+                "private key output path."
+            )
+        ),
+    ] = None,
+    certs_dir: Annotated[
+        Path, typer.Option(help="Base storage directory for named certs")
+    ] = DEFAULT_CERTS_DIR,
+    public_exponent: Annotated[
+        int,
+        typer.Option(
+            help="The public exponent of the new key. Either 65537 or 3 (for legacy purposes). Almost everyone should use 65537."
+        ),
+    ] = 65537,
+    key_size: Annotated[
+        int,
+        typer.Option(
+            help="The length of the modulus in bits. It is strongly recommended to be at least 2048."
+        ),
+    ] = 2048,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            help="""Overwrites existing files.
+            [yellow][bold]WARNING: [/yellow][/bold]--force will [red][bold]PERMANENTLY DELETE[/red][/bold]
+            the public and private key for this key name""",
+        ),
+    ] = False,
+    common_name: Annotated[
+        str,
+        typer.Option(
+            help="Common Name used in certificate. If unspecified, key-name is used."
+        ),
+    ] = "",
+    dns_names: Annotated[
+        Optional[List[str]], typer.Option("--dns", help="DNS entries")
+    ] = None,
+    ca_certificate_path: Annotated[
+        Optional[Path],
+        typer.Option(
+            help="Optional explicit path to CA certificate file. If absent, CA certificate path is derived from ca_dir."
+        ),
+    ] = None,
+    ca_private_key_path: Annotated[
+        Optional[Path],
+        typer.Option(
+            help="Optional explicit path to CA private key file. If absent, CA private key path is derived from ca_dir."
+        ),
+    ] = None,
+    ca_dir: Annotated[
+        Path, typer.Option(help="Certificate Authority directory")
+    ] = DEFAULT_CA_DIR,
+    valid_days: Annotated[
+        int,
+        typer.Option(
+            help="Number of days issued certificates should be valid for",
+            min=0,
+            max=825,
+        ),
+    ] = 825,
+) -> None:
+    """Generate public/private RSA key pair, CSR and certificate for a named identity.
+
+    Writes public/private key, CSR and certificate files, by default named:
+
+        $HOME/.local/share/gridworks/ca/certs/name/name.pub
+        $HOME/.local/share/gridworks/ca/certs/name/name.pem
+        $HOME/.local/share/gridworks/ca/certs/name/name.csr
+        $HOME/.local/share/gridworks/ca/certs/name/name.crt
+
+    Input file can be explicitly named with the --ca-certificate-path and --ca-private-key-path parameters.
+    Output file can be explicitly named by passing a path-like string for a ".pem" file to the name parameter and/or
+    with --csr-path and --certificate-path parameters.
+    """
+    private_key_path = _get_output_path(
+        name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
+    )
+    public_key_path = private_key_path.with_suffix(".pub")
+    if csr_path is None:
+        csr_path = private_key_path.with_suffix(".csr")
+    if certificate_path is None:
+        certificate_path = private_key_path.with_suffix(".crt")
+    if not force and (
+        private_key_path.exists()
+        or public_key_path.exists()
+        or csr_path.exists()
+        or certificate_path.exists()
+    ):
+        print(
+            "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
+        )
+        print(
+            f"  private key file  exists:{str(private_key_path.exists()):5s}  {private_key_path}"
+        )
+        print(
+            f"  public key file   exists:{str(private_key_path.exists()):5s}  {private_key_path}"
+        )
+        print(
+            f"  CSR file          exists:{str(csr_path.exists()):5s}  {private_key_path}"
+        )
+        print(
+            f"  Certificate file  exists:{str(certificate_path.exists()):5s}  {private_key_path}"
+        )
+        print("\nUse --force to overwrite keys")
+        return
+    ctx.invoke(
+        rsa,
+        name=name,
+        certs_dir=certs_dir,
+        public_exponent=public_exponent,
+        key_size=key_size,
+        force=force,
+    )
+    ctx.invoke(
+        csr,
+        name=csr_path,
+        private_key_path=private_key_path,
+        certs_dir=certs_dir,
+        common_name=common_name,
+        dns_names=dns_names,
+        force=force,
+    )
+    ctx.invoke(
+        certify,
+        name=certificate_path,
+        csr_path=csr_path,
+        ca_certificate_path=ca_certificate_path,
+        ca_private_key_path=ca_private_key_path,
+        ca_dir=ca_dir,
+        certs_dir=certs_dir,
+        valid_days=valid_days,
+        force=force,
     )
 
 
