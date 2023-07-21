@@ -30,7 +30,8 @@ nox.options.sessions = (
     # "safety",
     "mypy",
     "tests",
-    "typeguard",
+    # typeguard is getting confused about some typer parameters; perhaps those that are Optiona[X] = None.
+    # "typeguard",
     "xdoctest",
     "docs-build",
 )

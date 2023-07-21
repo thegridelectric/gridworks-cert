@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridworks-cert"
-version = "0.1.0"
+version = "0.2.0"
 description = "gwcert"
 authors = ["Andrew Schweitzer <schweitz72@gmail.com>"]
 license = "MIT"
@@ -54,7 +54,7 @@ myst-parser = {version = ">=0.16.1"}
 [tool.poetry.scripts]
 gwcert = "gwcert.__main__:app"
 gwcert-ca = "gwcert.ca.__main__:app"
-
+gwcert-key = "gwcert.key.__main__:app"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
