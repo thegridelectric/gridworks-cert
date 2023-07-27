@@ -1,18 +1,19 @@
 """Commands for gwcert.ca package."""
 import datetime
+import subprocess
 import uuid
 from pathlib import Path
 from typing import Annotated
 from typing import List
 from typing import Optional
 
+import rich
 import typer
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa as crypto_rsa
 from cryptography.x509.oid import NameOID
-from rich import print
 
 from gwcert import DEFAULT_CA_DIR
 from gwcert.paths import DEFAULT_CERTS_DIR
@@ -50,7 +51,7 @@ _INVALID_PATHS = [Path("."), Path("..")]
 CWD = Path(".")
 
 
-def _get_output_path(
+def get_output_path(
     name_or_output_path: str, output_suffix: str, certs_dir: Path = CWD
 ) -> Path:
     """
@@ -153,26 +154,26 @@ def rsa(
 
     Output files can be explicitly named by passing a path-like string for a ".pem" file to the name parameter.
     """
-    private_key_path = _get_output_path(
+    private_key_path = get_output_path(
         name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
     )
     public_key_path = private_key_path.with_suffix(".pub")
     if not force and (private_key_path.exists() or public_key_path.exists()):
-        print(
+        rich.print(
             "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
         )
-        print(
+        rich.print(
             f"  private key file  exists:{str(private_key_path.exists()):5s}  {private_key_path}"
         )
-        print(
+        rich.print(
             f"  public key file   exists:{str(private_key_path.exists()):5s}  {private_key_path}"
         )
-        print("\nUse --force to overwrite keys")
+        rich.print("\nUse --force to overwrite keys")
         return
     key = crypto_rsa.generate_private_key(
         public_exponent=public_exponent, key_size=key_size
     )
-    print(f"Writing private key file: {private_key_path}")
+    rich.print(f"Writing private key file: {private_key_path}")
     _store_file(
         private_key_path,
         key.private_bytes(
@@ -182,7 +183,7 @@ def rsa(
         ),
         0o600,
     )
-    print(f"Writing public key file:  {public_key_path}")
+    rich.print(f"Writing public key file:  {public_key_path}")
     _store_file(
         public_key_path,
         key.public_key().public_bytes(
@@ -246,14 +247,14 @@ def csr(
     Output file can be explicitly named by passing a path-like string for a ".csr" file to the name parameter.
 
     """
-    csr_path = _get_output_path(
+    csr_path = get_output_path(
         name_or_output_path=name, output_suffix=".csr", certs_dir=certs_dir
     )
     if not force and csr_path.exists():
-        print(
+        rich.print(
             f"CSR file {csr_path} [yellow][bold]already exists. Doing nothing.[/yellow][/bold]"
         )
-        print("\nUse --force to overwrite csr file")
+        rich.print("\nUse --force to overwrite csr file")
         return
     if private_key_path is None:
         private_key_path = csr_path.with_suffix(".pem")
@@ -264,10 +265,13 @@ def csr(
     with private_key_path.open("rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
 
+    if not common_name:
+        common_name = csr_path.stem
+
     if not dns_names:
         dns_names = [common_name]
 
-    print(f"Writing CSR file:         {csr_path}")
+    rich.print(f"Writing CSR file:         {csr_path}")
     _store_file(
         csr_path,
         x509.CertificateSigningRequestBuilder()  # type: ignore
@@ -353,7 +357,7 @@ def certify(
     Input file can be explicitly named with the --csr-path, --ca-certificate-path and --ca-private-key-path parameters.
     Output file can be explicitly named by passing a path-like string for a ".crt" file to the name parameter.
     """
-    certificate_path = _get_output_path(name, ".crt", certs_dir)
+    certificate_path = get_output_path(name, ".crt", certs_dir)
     if csr_path is None:
         csr_path = certificate_path.with_suffix(".csr")
     if ca_certificate_path is None:
@@ -362,10 +366,10 @@ def certify(
         ca_private_key_path = ca_dir / "private" / "ca_key.pem"
 
     if not force and certificate_path.exists():
-        print(
+        rich.print(
             f"Ceritifcate file {certificate_path} [yellow][bold]already exists. Doing nothing.[/yellow][/bold]"
         )
-        print("\nUse --force to overwrite certificate file")
+        rich.print("\nUse --force to overwrite certificate file")
         return
     if not csr_path.exists():
         raise ValueError(f"CSR path {csr_path} does not exist")
@@ -375,25 +379,25 @@ def certify(
         raise ValueError(f"CA private key path {ca_private_key_path} does not exist")
 
     with csr_path.open("rb") as f:
-        csr = x509.load_pem_x509_csr(f.read())
+        csr_ = x509.load_pem_x509_csr(f.read())
     with ca_certificate_path.open("rb") as f:
         ca_certificate = x509.load_pem_x509_certificate(f.read())
     with ca_private_key_path.open("rb") as f:
         ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
-    certificate_builder: x509.CertificateBuilder = x509.CertificateBuilder().subject_name(csr.subject)  # type: ignore
-    for extension in csr.extensions:
+    certificate_builder: x509.CertificateBuilder = x509.CertificateBuilder().subject_name(csr_.subject)  # type: ignore
+    for extension in csr_.extensions:
         if extension.value.oid._name != "subjectAltName":  # noqa
             continue
         certificate_builder = certificate_builder.add_extension(
             extension.value, critical=extension.critical
         )
 
-    print(f"Writing certificate file: {certificate_path}")
+    rich.print(f"Writing certificate file: {certificate_path}")
     _store_file(
         certificate_path,
         certificate_builder.issuer_name(ca_certificate.subject)
-        .public_key(csr.public_key())
+        .public_key(csr_.public_key())
         .serial_number(uuid.uuid4().int)
         .not_valid_before(datetime.datetime.today() - datetime.timedelta(1, 0, 0))
         .not_valid_after(
@@ -427,6 +431,51 @@ def certify(
         )
         .public_bytes(encoding=serialization.Encoding.PEM),
     )
+
+
+@app.command()
+def info(
+    name: Annotated[
+        str,
+        typer.Argument(
+            help="'name' of generated certificate, or explict path to generated crt file."
+        ),
+    ],
+    certs_dir: Annotated[
+        Path, typer.Option(help="Base storage directory for named certs")
+    ] = DEFAULT_CERTS_DIR,
+    show_files: Annotated[
+        bool,
+        typer.Option(
+            "--files", help="Show paths of files in directory of certificate."
+        ),
+    ] = False,
+):
+    """Show information about a certificate using '[cyan]openssl x509 -in CERTIFICATE_PATH -text -noout[/cyan]'."""
+    certificate_path = get_output_path(
+        name_or_output_path=name, output_suffix=".crt", certs_dir=certs_dir
+    )
+    rich.print(f"Showing information for certificate {certificate_path}")
+    if show_files:
+        cert_dir = certificate_path.parent
+        rich.print(f"Files for certificate {certificate_path.stem}")
+        for path in cert_dir.iterdir():
+            rich.print(f" {path}")
+    cmd = [
+        "openssl",
+        "x509",
+        "-in",
+        str(certificate_path),
+        "-text",
+        "-noout",
+    ]
+    rich.print(f"Running command:\n\n\t{' '.join(cmd)}\n")
+    result: subprocess.CompletedProcess = subprocess.run(cmd, capture_output=True)
+    print(result.stdout.decode("utf-8"))
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ERROR. Command <{' '.join(cmd)}> failed with returncode:{result.returncode}"
+        )
 
 
 @app.command()
@@ -526,7 +575,7 @@ def add(
     Output file can be explicitly named by passing a path-like string for a ".pem" file to the name parameter and/or
     with --csr-path and --certificate-path parameters.
     """
-    private_key_path = _get_output_path(
+    private_key_path = get_output_path(
         name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
     )
     public_key_path = private_key_path.with_suffix(".pub")
@@ -540,22 +589,22 @@ def add(
         or csr_path.exists()
         or certificate_path.exists()
     ):
-        print(
+        rich.print(
             "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
         )
-        print(
+        rich.print(
             f"  private key file  exists:{str(private_key_path.exists()):5s}  {private_key_path}"
         )
-        print(
+        rich.print(
             f"  public key file   exists:{str(private_key_path.exists()):5s}  {private_key_path}"
         )
-        print(
+        rich.print(
             f"  CSR file          exists:{str(csr_path.exists()):5s}  {private_key_path}"
         )
-        print(
+        rich.print(
             f"  Certificate file  exists:{str(certificate_path.exists()):5s}  {private_key_path}"
         )
-        print("\nUse --force to overwrite keys")
+        rich.print("\nUse --force to overwrite keys")
         return
     ctx.invoke(
         rsa,

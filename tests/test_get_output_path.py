@@ -1,7 +1,7 @@
 """Test _get_output_path(), which infers output path based (name, suffix, certs_dir) or accepts explicit path."""
 from pathlib import Path
 
-from gwcert.key.__main__ import _get_output_path  # noqa
+from gwcert.key.__main__ import get_output_path  # noqa
 
 
 def test_get_output_path() -> None:
@@ -24,4 +24,4 @@ def test_get_output_path() -> None:
         ("/c/a.pem", "/c/a.pem"),
         ("/c/a.b.pem", "/c/a.b.pem"),
     ]:
-        assert _get_output_path(name, ".pem", Path("/certs")) == Path(output)
+        assert get_output_path(name, ".pem", Path("/certs")) == Path(output)
