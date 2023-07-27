@@ -450,7 +450,7 @@ def info(
             "--files", help="Show paths of files in directory of certificate."
         ),
     ] = False,
-):
+) -> None:
     """Show information about a certificate using '[cyan]openssl x509 -in CERTIFICATE_PATH -text -noout[/cyan]'."""
     certificate_path = get_output_path(
         name_or_output_path=name, output_suffix=".crt", certs_dir=certs_dir
@@ -470,7 +470,7 @@ def info(
         "-noout",
     ]
     rich.print(f"Running command:\n\n\t{' '.join(cmd)}\n")
-    result: subprocess.CompletedProcess = subprocess.run(cmd, capture_output=True)
+    result = subprocess.run(cmd, capture_output=True)
     print(result.stdout.decode("utf-8"))
     if result.returncode != 0:
         raise RuntimeError(
