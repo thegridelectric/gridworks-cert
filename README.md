@@ -6,8 +6,8 @@
 [![License](https://img.shields.io/pypi/l/gridworks-cert)][license]
 
 [![Read the documentation at https://gridworks-cert.readthedocs.io/](https://img.shields.io/readthedocs/gridworks-cert/latest.svg?label=Read%20the%20Docs)][read the docs]
-[![Tests](https://github.com/anschweitzer/gridworks-cert/workflows/Tests/badge.svg)][tests]
-[![Codecov](https://codecov.io/gh/anschweitzer/gridworks-cert/branch/main/graph/badge.svg)][codecov]
+[![Tests](https://github.com/thegridelectric/gridworks-cert/workflows/Tests/badge.svg)][tests]
+[![Codecov](https://codecov.io/gh/thegridelectric/gridworks-cert/branch/main/graph/badge.svg)][codecov]
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
@@ -86,7 +86,7 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 [@cjolowicz]: https://github.com/cjolowicz
 [pypi]: https://pypi.org/
 [hypermodern python cookiecutter]: https://github.com/cjolowicz/cookiecutter-hypermodern-python
-[file an issue]: https://github.com/anschweitzer/gridworks-cert/issues
+[file an issue]: https://github.com/thegridelectric/gridworks-cert/issues
 [pip]: https://pip.pypa.io/
 [pypi_]: https://pypi.org/project/gridworks-cert/
 [status]: https://pypi.org/project/gridworks-cert/
@@ -104,6 +104,6 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 
 <!-- github-only -->
 
-[license]: https://github.com/anschweitzer/gridworks-cert/blob/main/LICENSE
-[contributor guide]: https://github.com/anschweitzer/gridworks-cert/blob/main/CONTRIBUTING.md
+[license]: https://github.com/thegridelectric/gridworks-cert/blob/main/LICENSE
+[contributor guide]: https://github.com/thegridelectric/gridworks-cert/blob/main/CONTRIBUTING.md
 [command-line reference]: https://gridworks-cert.readthedocs.io/en/latest/usage.html

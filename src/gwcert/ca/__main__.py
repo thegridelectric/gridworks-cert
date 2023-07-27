@@ -78,6 +78,8 @@ def print_ca_info(ca: CertificateAuthority) -> None:
     print(f" Named keys in {named_key_dir}: {len(named_keys)} ")
     for named_key in named_keys:
         print(f"  {named_key}")
+        for path in (named_key_dir / named_key).iterdir():
+            print(f"    {str(path)}")
 
 
 @app.command()

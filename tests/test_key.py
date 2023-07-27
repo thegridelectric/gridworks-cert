@@ -80,3 +80,20 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
         certs_dir / key_name / (key_name + ".crt"),
     ]:
         assert path.exists()
+
+    # gwcert key info
+    result = runner.invoke(
+        app,
+        args=[
+            "key",
+            "info",
+            "--certs-dir",
+            str(certs_dir),
+            key_name,
+        ],
+    )
+    assert result.exit_code == 0, result.stdout
+    subject_line = f"Subject: CN = {key_name}"
+    assert (
+        subject_line in result.stdout
+    ), f"ERROR. Subject line <{subject_line}> not in output\n{result.stdout}"
