@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "gridworks-cert"
 version = "0.3.0"
-description = "gwcert"
+description = "TLS certificate management tools for GridWorks"
 authors = ["Andrew Schweitzer <schweitz72@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/anschweitzer/gridworks-cert"
-repository = "https://github.com/anschweitzer/gridworks-cert"
+homepage = "https://github.com/thegridelectric/gridworks-cert"
+repository = "https://github.com/thegridelectric/gridworks-cert"
 documentation = "https://gridworks-cert.readthedocs.io"
 packages = [
     { include = "gwcert", from = "src" },
@@ -16,14 +16,14 @@ classifiers = [
 ]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/anschweitzer/gridworks-cert/releases"
+Changelog = "https://github.com/thegridelectric/gridworks-cert/releases"
 
 [tool.poetry.dependencies]
 python = "^3.9"
 ownca = ">=0.4.0"
 typer = ">=0.9.0"
-xdg = "^6.0.0"
-rich = "^13.4.2"
+xdg = ">=6.0.0"
+rich = ">=12.0.0"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
