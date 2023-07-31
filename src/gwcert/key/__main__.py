@@ -344,7 +344,7 @@ def certify(
     ] = False,
 ) -> None:
     """
-    Sign a CSR, producing a certificate .
+    Sign a CSR, producing a certificate.
 
     Uses input files, by default named:
 
