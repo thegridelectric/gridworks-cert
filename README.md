@@ -23,14 +23,15 @@ See also [tls-gen], a repo from [rabbitmq], which performs a similar task using 
 ## Features
 
 - Create a local Certificate Authority directory with a self-signed certificate, via `gwcert ca create`.
-- Create named key pairs and sign them with the created CA with, via `gwcert ca add-key`.
+- Create named key pairs, CSRs and certificates with _arbitrary_ input and output paths, via `gwcert key add`.
+- Build cli commands visually with `gwcert tui`.
 
 ## Installation
 
-You can install _gwcert_ via [pip] from [PyPI]:
+The recommended way to install _gwcert_ is with [pipx] from [PyPI]:
 
 ```console
-$ pip install gridworks-cert
+$ pipx install gridworks-cert
 ```
 
 ## Usage
@@ -40,8 +41,7 @@ Get help with any of:
 ```shell
 gwcert
 gwcert ca
-gwcert ca create --help
-gwcert ca add-key --help
+gwcert key
 ```
 
 Create a Certificate Authority directory with a self-signed certificate via:
@@ -50,16 +50,28 @@ Create a Certificate Authority directory with a self-signed certificate via:
 gwcert ca create
 ```
 
-Show information about the locally created ca with:
+Show information about the locally created ca and keys with:
 
 ```shell
 gwcert ca info
 ```
 
-Add a named set of keys (public, private, certificate) via:
+Add a named set of keys (public, private, certificate) via, for example:
 
 ```shell
-gwcert ca add-key
+gwcert key add KEY_NAME
+```
+
+Show information about a certificate:
+
+```shell
+gwcert key info KEY_NAME
+```
+
+Build CLI commands visually:
+
+```shell
+gwcert tui
 ```
 
 Please see the [Command-line Reference] for more details.
@@ -101,6 +113,7 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 [pyca/cryptography]: https://cryptography.io/en/latest/
 [openssl]: https://www.openssl.org/
 [rabbitmq]: https://rabbitmq.com/ssl.html#automated-certificate-generation-transcript
+[pipx]: https://pypa.github.io/pipx/
 
 <!-- github-only -->
 

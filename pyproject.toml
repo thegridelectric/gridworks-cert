@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridworks-cert"
-version = "0.3.1"
+version = "0.3.2"
 description = "TLS certificate management tools for GridWorks"
 authors = ["Andrew Schweitzer <schweitz72@gmail.com>"]
 license = "MIT"
@@ -24,6 +24,7 @@ ownca = ">=0.4.0"
 typer = ">=0.9.0"
 xdg = ">=6.0.0"
 rich = ">=12.0.0"
+trogon = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
@@ -84,6 +85,7 @@ show_error_context = false
 [[tool.mypy.overrides]]
 module = [
     "ownca.*",
+    "trogon",
 ]
 ignore_missing_imports = true
 
