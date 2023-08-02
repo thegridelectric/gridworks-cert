@@ -17,8 +17,8 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
     )
     assert result.exit_code == 0, result.stdout
     for path in [
-        certs_dir / key_name / (key_name + ".pem"),
         certs_dir / key_name / (key_name + ".pub"),
+        certs_dir / key_name / "private" / (key_name + ".pem"),
     ]:
         assert path.exists()
 
@@ -74,8 +74,8 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
     )
     assert result.exit_code == 0, result.stdout
     for path in [
-        certs_dir / key_name / (key_name + ".pem"),
         certs_dir / key_name / (key_name + ".pub"),
+        certs_dir / key_name / "private" / (key_name + ".pem"),
         certs_dir / key_name / (key_name + ".csr"),
         certs_dir / key_name / (key_name + ".crt"),
     ]:
