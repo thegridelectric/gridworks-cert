@@ -97,6 +97,10 @@ def get_output_path(
     return output_path
 
 
+def _private_from_public_path(public_path: Path, private_suffix: str = ".pem") -> Path:
+    return public_path.parent / "private" / (public_path.stem + private_suffix)
+
+
 def _store_file(
     output_path: Path,
     data_bytes: bytes,
@@ -116,9 +120,18 @@ def rsa(
     name: Annotated[
         str,
         typer.Argument(
-            help="'name' of generated key, or explict path to generated key file."
+            help="'name' of generated key, or explict path to generated public key file."
         ),
     ],
+    private_key_path: Annotated[
+        Optional[Path],
+        typer.Option(
+            help=(
+                "Optional explicit path to private key file. If absent, private key path is derived from "
+                "public key output path."
+            )
+        ),
+    ] = None,
     certs_dir: Annotated[
         Path, typer.Option(help="Base storage directory for named certs")
     ] = DEFAULT_CERTS_DIR,
@@ -150,14 +163,15 @@ def rsa(
     Writes public and private key files, by default named:
 
         $HOME/.local/share/gridworks/ca/certs/name/name.pub
-        $HOME/.local/share/gridworks/ca/certs/name/name.pem
+        $HOME/.local/share/gridworks/ca/certs/name/private/name.pem
 
     Output files can be explicitly named by passing a path-like string for a ".pem" file to the name parameter.
     """
-    private_key_path = get_output_path(
-        name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
+    public_key_path = get_output_path(
+        name_or_output_path=name, output_suffix=".pub", certs_dir=certs_dir
     )
-    public_key_path = private_key_path.with_suffix(".pub")
+    if private_key_path is None:
+        private_key_path = _private_from_public_path(public_key_path)
     if not force and (private_key_path.exists() or public_key_path.exists()):
         rich.print(
             "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
@@ -237,7 +251,7 @@ def csr(
 
     Uses input files, by default named:
 
-        $HOME/.local/share/gridworks/ca/certs/name/name.pub
+        $HOME/.local/share/gridworks/ca/certs/name/private/name.pem
 
     Writes a CSR file, by default named:
 
@@ -256,12 +270,11 @@ def csr(
         )
         rich.print("\nUse --force to overwrite csr file")
         return
-    if private_key_path is None:
-        private_key_path = csr_path.with_suffix(".pem")
 
+    if private_key_path is None:
+        private_key_path = _private_from_public_path(csr_path)
     if not private_key_path.exists():
         raise ValueError(f"Private key path {private_key_path} does not exist")
-
     with private_key_path.open("rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
 
@@ -484,24 +497,24 @@ def add(
     name: Annotated[
         str,
         typer.Argument(
-            help="'name' of generated identity, or explict path to generated private key file."
+            help="'name' of generated identity, or explict path to generated certificate file."
         ),
     ],
     csr_path: Annotated[
         Optional[Path],
         typer.Option(
             help=(
-                "Optional explicit path to Certificate Signing Request. If absent, CSR path is derived from the"
+                "Optional explicit path to Certificate Signing Request. If absent, CSR path is derived from the "
                 "private key output path."
             )
         ),
     ] = None,
-    certificate_path: Annotated[
+    private_key_path: Annotated[
         Optional[Path],
         typer.Option(
             help=(
-                "Optional explicit path to Certificate Signing Request. If absent, CSR path is derived from the"
-                "private key output path."
+                "Optional explicit path to private key. If absent, private key path is derived from the "
+                "certificate output path."
             )
         ),
     ] = None,
@@ -567,7 +580,7 @@ def add(
     Writes public/private key, CSR and certificate files, by default named:
 
         $HOME/.local/share/gridworks/ca/certs/name/name.pub
-        $HOME/.local/share/gridworks/ca/certs/name/name.pem
+        $HOME/.local/share/gridworks/ca/certs/name/private/name.pem
         $HOME/.local/share/gridworks/ca/certs/name/name.csr
         $HOME/.local/share/gridworks/ca/certs/name/name.crt
 
@@ -575,14 +588,14 @@ def add(
     Output file can be explicitly named by passing a path-like string for a ".pem" file to the name parameter and/or
     with --csr-path and --certificate-path parameters.
     """
-    private_key_path = get_output_path(
-        name_or_output_path=name, output_suffix=".pem", certs_dir=certs_dir
+    certificate_path = get_output_path(
+        name_or_output_path=name, output_suffix=".crt", certs_dir=certs_dir
     )
-    public_key_path = private_key_path.with_suffix(".pub")
+    public_key_path = certificate_path.with_suffix(".pub")
+    if private_key_path is None:
+        private_key_path = _private_from_public_path(certificate_path)
     if csr_path is None:
-        csr_path = private_key_path.with_suffix(".csr")
-    if certificate_path is None:
-        certificate_path = private_key_path.with_suffix(".crt")
+        csr_path = certificate_path.with_suffix(".csr")
     if not force and (
         private_key_path.exists()
         or public_key_path.exists()
@@ -608,7 +621,7 @@ def add(
         return
     ctx.invoke(
         rsa,
-        name=name,
+        name=public_key_path,
         certs_dir=certs_dir,
         public_exponent=public_exponent,
         key_size=key_size,
