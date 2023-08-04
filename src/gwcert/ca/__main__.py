@@ -108,6 +108,8 @@ def create(
 ) -> None:
     """Create files necessary for a simple, self-signed Certificate Authority."""
     ca_dir = Path(ca_dir)
+    if not ca_dir.exists():
+        ca_dir.mkdir(parents=True)
     ca_status = ownca_directory(str(ca_dir))
     if ca_status.certificate or ca_status.key or ca_status.public_key or ca_status.crl:
         print(
