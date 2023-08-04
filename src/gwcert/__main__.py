@@ -27,7 +27,7 @@ def tui(ctx: typer.Context) -> None:
     Trogon(get_group(app), click_context=ctx).run()
 
 
-def _version_callback(value: bool):
+def _version_callback(value: bool) -> None:
     """Print version and exit"""
     if value:
         typer.echo(__version__)
@@ -43,7 +43,7 @@ def _main(
         is_eager=True,
         help="Show version and exit.",
     ),
-):
+) -> None:
     """Do any argument processing for base gwcert command."""
     return
 
