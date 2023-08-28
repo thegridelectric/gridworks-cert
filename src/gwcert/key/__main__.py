@@ -1,5 +1,6 @@
 """Commands for gwcert.ca package."""
 import datetime
+import shutil
 import subprocess
 import uuid
 from pathlib import Path
@@ -304,7 +305,7 @@ def csr(
 
 
 @app.command()
-def certify(
+def certify(  # noqa: C901
     name: Annotated[
         str,
         typer.Argument(
@@ -346,6 +347,13 @@ def certify(
             max=825,
         ),
     ] = 825,
+    copy_ca_cert: Annotated[
+        bool,
+        typer.Option(
+            "--copy-ca-cert",
+            help="""Copy CA certicate into same directory as generated certificate.""",
+        ),
+    ] = False,
     force: Annotated[
         bool,
         typer.Option(
@@ -368,16 +376,17 @@ def certify(
         $HOME/.local/share/gridworks/ca/certs/name/name.crt
 
     Input file can be explicitly named with the --csr-path, --ca-certificate-path and --ca-private-key-path parameters.
-    Output file can be explicitly named by passing a path-like string for a ".crt" file to the name parameter.
+    Output file can be explicitly named by passing a path-like string for a ".crt" file to the name parameter. The CA
+    certificate can be copied into the same directory as the generated certificate with --copy_ca_cert.
     """
     certificate_path = get_output_path(name, ".crt", certs_dir)
     if csr_path is None:
         csr_path = certificate_path.with_suffix(".csr")
     if ca_certificate_path is None:
         ca_certificate_path = ca_dir / "ca.crt"
+    ca_certificate_copy_path = certificate_path.parent / ca_certificate_path.name
     if ca_private_key_path is None:
         ca_private_key_path = ca_dir / "private" / "ca_key.pem"
-
     if not force and certificate_path.exists():
         rich.print(
             f"Ceritifcate file {certificate_path} [yellow][bold]already exists. Doing nothing.[/yellow][/bold]"
@@ -444,6 +453,14 @@ def certify(
         )
         .public_bytes(encoding=serialization.Encoding.PEM),
     )
+
+    # Always remove the old CA certificate copy; leaving it without replacing it would be ambiguous.
+    if ca_certificate_copy_path.exists():
+        ca_certificate_copy_path.unlink()
+    # Copy CA cert if requested
+    if copy_ca_cert:
+        rich.print(f"Copying CA certificate to: {ca_certificate_copy_path}")
+        shutil.copyfile(ca_certificate_path, ca_certificate_copy_path)
 
 
 @app.command()
@@ -577,8 +594,9 @@ def add(
 ) -> None:
     """Generate public/private RSA key pair, CSR and certificate for a named identity.
 
-    Writes public/private key, CSR and certificate files, by default named:
+    Writes CA certficiate, public/private key, CSR and certificate files, by default named:
 
+        $HOME/.local/share/gridworks/ca/certs/name/ca.crt
         $HOME/.local/share/gridworks/ca/certs/name/name.pub
         $HOME/.local/share/gridworks/ca/certs/name/private/name.pem
         $HOME/.local/share/gridworks/ca/certs/name/name.csr
@@ -606,16 +624,16 @@ def add(
             "One or more output files [yellow][bold]already exist. Doing nothing.[/yellow][/bold]"
         )
         rich.print(
-            f"  private key file  exists:{str(private_key_path.exists()):5s}  {private_key_path}"
+            f"  private key file     exists:{str(private_key_path.exists()):5s}  {private_key_path}"
         )
         rich.print(
-            f"  public key file   exists:{str(private_key_path.exists()):5s}  {private_key_path}"
+            f"  public key file      exists:{str(public_key_path.exists()):5s}  {public_key_path}"
         )
         rich.print(
-            f"  CSR file          exists:{str(csr_path.exists()):5s}  {private_key_path}"
+            f"  CSR file             exists:{str(csr_path.exists()):5s}  {csr_path}"
         )
         rich.print(
-            f"  Certificate file  exists:{str(certificate_path.exists()):5s}  {private_key_path}"
+            f"  Certificate file     exists:{str(certificate_path.exists()):5s}  {certificate_path}"
         )
         rich.print("\nUse --force to overwrite keys")
         return
@@ -645,6 +663,7 @@ def add(
         ca_dir=ca_dir,
         certs_dir=certs_dir,
         valid_days=valid_days,
+        copy_ca_cert=True,
         force=force,
     )
 
