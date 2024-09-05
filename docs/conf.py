@@ -1,4 +1,5 @@
 """Sphinx configuration."""
+
 project = "gwcert"
 author = "Andrew Schweitzer"
 copyright = "2023, Andrew Schweitzer"
