@@ -94,10 +94,11 @@ def test_gwcert_key_files(runner: CliRunner, tmp_path: Path) -> None:
         ],
     )
     assert result.exit_code == 0, result.stdout
-    subject_line = f"Subject: CN = {key_name}"
+    subject_line1 = f"Subject: CN = {key_name}"
+    subject_line2 = f"Subject: CN={key_name}"
     assert (
-        subject_line in result.stdout
-    ), f"ERROR. Subject line <{subject_line}> not in output\n{result.stdout}"
+        subject_line1 in result.stdout or subject_line2 in result.stdout
+    ), f"ERROR. Neither Subject line <{subject_line1}> nor <{subject_line2}> found in output\n{result.stdout}"
 
 
 def test_certify_ca_copy(runner: CliRunner, tmp_path: Path) -> None:
