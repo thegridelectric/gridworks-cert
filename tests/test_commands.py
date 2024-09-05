@@ -1,4 +1,5 @@
 """Test cases for the __main__ module."""
+
 from typer.testing import CliRunner
 
 from gwcert.__main__ import app

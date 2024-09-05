@@ -1,4 +1,5 @@
 """Nox sessions."""
+
 import os
 import shlex
 import shutil
@@ -6,7 +7,7 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 
-import nox
+import nox  # noqa
 
 
 try:
@@ -23,7 +24,7 @@ except ImportError:
 
 
 package = "gwcert"
-python_versions = ["3.11", "3.10", "3.9"]
+python_versions = ["3.12", "3.11", "3.10"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
@@ -162,12 +163,20 @@ def mypy(session: Session) -> None:
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments")
-    try:
-        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
-    finally:
-        if session.interactive:
-            session.notify("coverage", posargs=[])
+    session.install("pytest", "pygments")
+    if not session.posargs or (
+        session.posargs and session.posargs[0] != "--no-coverage"
+    ):
+        session.install("coverage[toml]")
+        try:
+            session.run(
+                "coverage", "run", "--parallel", "-m", "pytest", *session.posargs
+            )
+        finally:
+            if session.interactive:
+                session.notify("coverage", posargs=[])
+    else:
+        session.run("pytest", *session.posargs[1:])
 
 
 @session(python=python_versions[0])

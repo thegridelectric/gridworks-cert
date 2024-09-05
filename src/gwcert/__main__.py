@@ -1,4 +1,5 @@
 """gwcert command-line interface."""
+
 from importlib.metadata import version
 
 import typer
