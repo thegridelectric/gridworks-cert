@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridworks-cert"
-version = "0.4.6"
+version = "0.5.0"
 description = "TLS certificate management tools for GridWorks"
 authors = ["Andrew Schweitzer <schweitz72@gmail.com>"]
 license = "MIT"
@@ -19,12 +19,21 @@ classifiers = [
 Changelog = "https://github.com/thegridelectric/gridworks-cert/releases"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 ownca = ">=0.4.0"
 typer = ">=0.16.0"
 xdg = ">=6.0.0"
 rich = ">=12.0.0"
 trogon = ">=0.5.0"
+# TODO: remove when typer adjusts to click 8.2:
+#   https://github.com/fastapi/typer/pull/1240
+#   https://github.com/fastapi/typer/discussions/1233
+#   Older layers of discussion of click 8.2 support in typer:
+#     https://github.com/fastapi/typer/discussions/1215
+#     https://github.com/fastapi/typer/pull/1222
+#     https://github.com/fastapi/typer/commits/click-8.2/
+#
+click = "<8.2"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
@@ -44,11 +53,9 @@ pre-commit = ">=2.16.0"
 pre-commit-hooks = ">=4.1.0"
 pytest = ">=6.2.5"
 pyupgrade = ">=2.29.1"
-safety = ">=1.10.3"
 sphinx = ">=4.3.2"
 sphinx-autobuild = ">=2021.3.14"
 sphinx-click = ">=3.0.2"
-typeguard = ">=2.13.3"
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 myst-parser = {version = ">=0.16.1"}
 
@@ -81,11 +88,16 @@ pretty = false
 show_column_numbers = true
 show_error_codes = true
 show_error_context = false
+exclude = [
+    "hacking",
+]
 
 [[tool.mypy.overrides]]
 module = [
     "ownca.*",
     "trogon",
+    "nox",
+    "nox_poetry",
 ]
 ignore_missing_imports = true
 

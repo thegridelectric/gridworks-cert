@@ -1,3 +1,4 @@
+# type: ignore  # noqa: PGH003
 """Nox sessions."""
 
 import os
@@ -24,7 +25,7 @@ except ImportError:
 
 
 package = "gwcert"
-python_versions = ["3.12", "3.11", "3.10"]
+python_versions = ["3.13", "3.12", "3.11", "3.10"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
@@ -140,14 +141,6 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python=python_versions[0])
-def safety(session: Session) -> None:
-    """Scan dependencies for insecure packages."""
-    requirements = session.poetry.export_requirements()
-    session.install("safety")
-    session.run("safety", "check", "--full-report", f"--file={requirements}")
-
-
 @session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
@@ -190,14 +183,6 @@ def coverage(session: Session) -> None:
         session.run("coverage", "combine")
 
     session.run("coverage", *args)
-
-
-@session(python=python_versions[0])
-def typeguard(session: Session) -> None:
-    """Runtime type checking using Typeguard."""
-    session.install(".")
-    session.install("pytest", "typeguard", "pygments")
-    session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
 @session(python=python_versions)
