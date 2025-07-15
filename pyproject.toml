@@ -19,7 +19,7 @@ classifiers = [
 Changelog = "https://github.com/thegridelectric/gridworks-cert/releases"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 ownca = ">=0.4.0"
 typer = ">=0.16.0"
 xdg = ">=6.0.0"
