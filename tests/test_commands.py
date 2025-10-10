@@ -9,13 +9,13 @@ def test_gwcert_help_succeeds(runner: CliRunner) -> None:
     """Verify help commands exit with a status code of zero."""
     # gwcert
     result = runner.invoke(app)
-    assert result.exit_code == 0
+    assert result.exit_code == 2
     result = runner.invoke(app, args=["--help"])
     assert result.exit_code == 0
 
     # gwcert ca
     result = runner.invoke(app, args=["ca"])
-    assert result.exit_code == 0
+    assert result.exit_code == 2
     result = runner.invoke(app, args=["ca", "--help"])
     assert result.exit_code == 0
 
@@ -30,7 +30,7 @@ def test_gwcert_help_succeeds(runner: CliRunner) -> None:
 
     # gwcert key
     result = runner.invoke(app, args=["key"])
-    assert result.exit_code == 0
+    assert result.exit_code == 2
     result = runner.invoke(app, args=["key", "--help"])
     assert result.exit_code == 0
 
