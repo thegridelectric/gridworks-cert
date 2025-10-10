@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridworks-cert"
-version = "0.5.0"
+version = "0.5.1"
 description = "TLS certificate management tools for GridWorks"
 authors = ["Andrew Schweitzer <schweitz72@gmail.com>"]
 license = "MIT"
@@ -12,7 +12,7 @@ packages = [
     { include = "gwcert", from = "src" },
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 3 - Beta",
 ]
 
 [tool.poetry.urls]
@@ -21,19 +21,10 @@ Changelog = "https://github.com/thegridelectric/gridworks-cert/releases"
 [tool.poetry.dependencies]
 python = "^3.10"
 ownca = ">=0.4.0"
-typer = ">=0.16.0"
+typer = ">=0.18.0"
 xdg = ">=6.0.0"
 rich = ">=12.0.0"
 trogon = ">=0.5.0"
-# TODO: remove when typer adjusts to click 8.2:
-#   https://github.com/fastapi/typer/pull/1240
-#   https://github.com/fastapi/typer/discussions/1233
-#   Older layers of discussion of click 8.2 support in typer:
-#     https://github.com/fastapi/typer/discussions/1215
-#     https://github.com/fastapi/typer/pull/1222
-#     https://github.com/fastapi/typer/commits/click-8.2/
-#
-click = "<8.2"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
@@ -61,6 +52,7 @@ myst-parser = {version = ">=0.16.1"}
 
 [tool.poetry.scripts]
 gwcert = "gwcert.__main__:app"
+gridworks-cert = "gwcert.__main__:app"
 gwcert-ca = "gwcert.ca.__main__:app"
 gwcert-key = "gwcert.key.__main__:app"
 

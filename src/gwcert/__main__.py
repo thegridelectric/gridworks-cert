@@ -16,7 +16,7 @@ app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_enable=False,
     rich_markup_mode="rich",
-    help="GridWords TLS certificate tools.",
+    help=f"GridWords TLS certificate tools, version {__version__}",
 )
 app.add_typer(ca_app, name="ca")
 app.add_typer(key_app, name="key")
